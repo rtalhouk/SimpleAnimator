@@ -1,9 +1,15 @@
 # Easy Animator
-## Model
-### Overview
+This program was written to practice object-oriented programming best practices and S.O.L.I.D. principles. It follows the Model-View-Controller (MVC) programming framework and is written in Java, with user-interface making use of Java Swing. The program is meant to create visual animations based on text files that denote where and when shapes should move in the animation. It supports plain text, SVG, visual, and editable view types. Below is a description of how to get it up and running, as well as an in-depth description of each interface and its purpose.
+
+#### Getting it working
+Everything you need can be found in the 'resources' folder of this repository. To use the animator, simply download the JAR file and any `.txt` files you wish to animate. Then, in a shell run the following command. `java -jar Animator.jar -in demoFile.txt -view text/visual/svg/edit -out outputFile -speed tickPerSecond`. The `-in` and `-view` commands are mandatory as they determine what is to be animated and how to animate it respectively. The other two are optional. Specifying an output file only makes a difference if you want a text or SVG version of the animation. The speed argument determines the number of ticks per second at which the animation moves (default to 1, so specifying a speed around 30 is recommended).
+
+## How it Works
+### Model
+#### Overview
 Most original text from this README descibes our model from Assignment 5. All additions documenting changes from Assignment 5 to 6 will be added below the original text and will be clearly indicated with "CHANGES." All additions documenting changes from Assignment 6 to 7 will be added below to the text and will be indicated with "FINAL CHANGES."
 
-### IModel/Model
+#### IModel/Model
 The model interface is the user-facing interface and will be the one called by the controller or view when they are implemented. Our implementation has only one field: a hashmap that maps unique string names to specific `IAnimatedShape` objects. These shapes are added using the `addShapeAt(...)` method, which takes in a name and the attributes required to initalize the an animated shape. The other methods primarily perform actions on specified animated shapes. The model methods simply finds the correct animated shape based on the name and delegates the action to that object's methods.
 CHANGES:
 - Removal of  `addShapeAt(..)` function, as it did not align with the way shapes were declared by the given text files. Instead, the the method was changed to `addShape(...)` whose states were then set to null until a full motion was added.
@@ -19,7 +25,7 @@ FINAL CHANGES:
 -Added `getMaxTick()` method which retrieves the largest/latest tick out of every state of every shape of the whole animation. The purpose of this function is for the controller to knowthe final tick in order to loop if specified by the user.
 
 
-### IAnimatedShape/AnimatedShape
+#### IAnimatedShape/AnimatedShape
 The animated shape interface is comprised of objects that represent shapes at different states. Our implementation has three different fields: an enum representing the type of shape. A single shape state representing the initial state of the shape when it is intialized from the model, and a list of states that represent endpoints of motions added by the user. The length of the list will always be even as the start and end points of the motion are added at the same time. The motions are added using a pseudo-builder pattern that creates two shape states based on the specifications of the movement. The first shape state is defaulted to be identical to the ending shape state of the previous motion. This ensures that there will be no gaps int the motions of any shape and that the ending state of one motion always matches the starting state of the next one.
 This builder pattern also allows for easy extension to create new types of motions as each of the attributes of the shape can be changed independently. The current motions that are supported are a "full motion" (changing all attributes), "move to" (changing just the position), "change color to", "change size to", and "do nothing" (which is required so no gaps appear in the ticks of the motions of the Animated Shape.
 This interface also has a `getShapeAtTick` and `getMotions` function. These methods will return an IllegalArgumentException and an empty string repectively if they are called on an Animated shape that has simply been initalized and no motions have been added. This was a design decision we made becuase we feel that an animated shape is a representation of a shape over time, so simply initializing at a single tick does not have any motion to it.
@@ -37,43 +43,43 @@ FINAL CHANGES:
 -Added `getStatesStringArray()` method which returns the states of this shape as an ArrayList of Strings.
 
 
-### IReadOnlyShapeState/IShapeState
+#### IReadOnlyShapeState/IShapeState
 These interfaces is comprised of objects that represent shapes at a given tick in the model animation. This inteface was created to represent individual state of an animated shapes at given ticks. Therefore we made an abstract class to implement the interface that had tick, width, height, color, and position fields, as any shape state in the animation will need these properities. The only methods this inteface supports are getters (in both intefaces) and a `toString` and `deepCopy` methods that return new representations of the shapes. This is because we believe that these shape states should be immuatable once created.
 The aforementioned abstract class is currently only extended by Rectangles and Ellipses, but new shapes can be added easily by adding new classes and adding the new type of shape to the `ShapeType` enum. The classes that extend the abstract shape state class are comprised only of their explicit constructors and versions of the `deepCopy` method.
 All getters are kept and serve to ensure no chance of mutation when passed to locations where users may have access.
 
 
-### ShapeType Enum
+#### ShapeType Enum
 Represents a list of supported types of shapes. In order to add a new supported shape. A user need only add to the enum and write a class exending the abstract shape state class. That class need only have explicit constructors and a override of the `deepCopy` method.
 
-### Color
+#### Color
 A simple class to represent the RGB values of a color in an organized way. The implementation is only used internally so users need not be familiar with the `Color` constructor. Instead they can simply pass integers into the `changeColor` methods in the model.
 CHANGES:
 - Added `getHSB()` method so RBG values could be substituted for HSB values if necesssary.
 
-## View
-### IView
+### View
+#### IView
 Supports all methods for all views and throws `UnsupportedOperationException` if it is not applicable for each concrete implementation.
 
-### VisualView
+#### VisualView
 The VisualView class extends the JFrame class and has a `DrawingPanel`,  `Timer`, and integer field to keep track of the tick. In the view's constructor, the timer is defined to draw shapes (included JPanel method) every time increment specified by the user. The shapes to draw are returned from the `getShapesAtTick(int)` method. Then to start the timer, the `render()` method is called.
 FINAL CHANGES:
 -Changed the name of the method `formatSVG(...)` to `printView(...)` to get rid of the unneccessary extra method.
 -Added `addListener(...)` method which adds a listener to this view that handles when events are fired by the view. 
 -Added `setShapesArray(...)` method sets the list of read only shapes in the animation in the view.
 
-### SVGView
+#### SVGView
 The `SVGView` class implements a command pattern for the type of SVG tag it must output. We felt this was a good design decision becuase tags vary based on the type of shape so constructing a tag for a certain kind of `ShapeType` enum is alagous to executing different commands on the view. Each different kind of tag is represented by its own class, with all common code going in an abstracted class. The reason for this was so new types of shapes could be easily added just by extending the abstract class.
 
-### TextView
+#### TextView
 The `TextView` class is quite simplistic, it is essentially the same as the implementation from Assignment 5, but instead housed in its own class.
 FINAL CHANGES:
 The format for each motion was off because we did not say "motion" before every motion printed.
 
-### DrawingPanel
+#### DrawingPanel
 The `DrawingPanel` class extends JPanel and is where all the graphics are acutally painted in the `VisuaView`. Its concrete implementation contains the `paintComponent()` method, which is given the shapes to draw and the graphics so it can paint.
 
-### IViewListener
+#### IViewListener
 The `IViewListener` interface represents an object that listens to an `IView` interface for methods called based on what events are fired, in this case in the `EditView` class.
 FINAL CHANGES:
 -Added `pause()` method to pause the animation when fired by the user.
@@ -88,15 +94,15 @@ FINAL CHANGES:
 -Added `addKeyFrame(...)` method which adds a keyFrame to the shape specified by the user. Its arguments consist of the shape's name and all of the fields to specify its size, location, and color.
 -Added `getShape(...)` method which retrieves a specific read only shape based on the name passed in this method.
 
-### TestView 
+#### TestView 
 This class implements `IView` and represents a dummy view that tests whether the controller and model are synced up correctly with the view. It takes in a readable that fires dummy events to be handled by the controller. The purpose of this class is to implement the methodology of mock testing. The only methods implemented in this class are from the interface.
 
 
-## Controller
-### IAnimatorController
+### Controller
+#### IAnimatorController
 Represents a controller interface. It has no methods because the inteface extends another that contains all the features that has methods for all the actions that could come from the view. `IAnimatorController` implements `IViewListener`.
 
-### VisualController
+#### VisualController
 Represents a controller for the visual-style views of the animator. It handles events fired by the model and then edits the model as desired. `VisualController` implements `IAnimatorController`.
 FINAL CHANGES:
 -Added `pause()` method to pause the animation when fired by the user.
@@ -111,7 +117,7 @@ FINAL CHANGES:
 -Added `addKeyFrame(...)` method which adds a keyFrame to the shape specified by the user. Its arguments consist of the shape's name and all of the fields to specify its size, location, and color.
 -Added `getShape(...)` method which retrieves a specific read only shape based on the name passed in this method.
 
-### TestController
+#### TestController
 Represents a dummy controller used only for testing. It has an Appendable that each of the methods appends to and implements `IAnimatorController` and `IViewListener`.
 -Added `pause()` method to pause the animation when fired by the user.
 -Added `play()` method to resume the animation when fired by the user.
@@ -125,9 +131,9 @@ Represents a dummy controller used only for testing. It has an Appendable that e
 -Added `addKeyFrame(...)` method which adds a keyFrame to the shape specified by the user. Its arguments consist of the shape's name and all of the fields to specify its size, location, and color.
 -Added `getShape(...)` method which retrieves a specific read only shape based on the name passed in this method.
 
-# Bonus Assignment Changes
+### Bonus Assignment Changes
 
-### IViewListener
+#### IViewListener
 This `interface` has been updated to include getters such as:
 - `getMaxTick()` which retrieves the maximum tick in the whole animation in order to make the total size of the scrubber
 - `getCurrentTick()` which gets the current tick in the animation in order to allow for the scrubber's knob to follow along with the animation as it moves
@@ -135,17 +141,17 @@ This `interface` has been updated to include getters such as:
 - In addition, `changeTickTo(...)` was also added in order for the animation to receive the location of the knob and animate from there accordingly.  
 - `changeLayer(int)` was added to allow for the user to change which layer any of the shapes is in. This calls a method in the model which mutates the correct `AnimatedShape`
 
-### IView
+#### IView
 This `interface` has been updated due to the addition of `setKnob()` which sets the position of the knob along the slider as the animation plays out. This is so the scrubber is ont jsut a setter for wherever it is placed, but is interacting simultaneously with the animation whether playing or paused.
 
-### EditView
+#### EditView
 A new panel was added to the view so that for any shape selected, the layer of the shape could be changed with the click of a button and a text field. The `changeLayerAction()` method was added to fire this event to the controller.
 
-### IModel
+#### IModel
 Added method:
 - `changeLayer(String id, int layer)` changes the layer of the `IAnimatedShape` with the given string ID.
 
-### IAnimatedShape
+#### IAnimatedShape
 Added method:
 - `changeLayer(int)` changes the layer of this `IAnimatedShape` to the given integer value.
 
